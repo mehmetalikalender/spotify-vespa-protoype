@@ -1,0 +1,61 @@
+schema song {
+    document song {
+        
+        field song_id type int { 
+            indexing: summary | attribute # summary:bu alani arama yaptigimda bana geri verme  attribute :bu alani bellekte tut siralama icin
+        }
+
+        field title type string {
+            indexing: summary | index #index :kelimeyi parcalayip sozluk olustur arama icin
+            match: text
+        }
+
+        field artist type string {
+            indexing: summary | index
+            match: text 
+        }
+
+        field genre type string {
+            indexing: summary | attribute
+            match: exact # tam eslesme aranir
+        }
+
+        field popularity type int {
+            indexing: summary | attribute  
+        }
+
+        field stream_url type string {
+            indexing: summary  # bu veri arama veya siralamada kullanilmayacak
+        }
+
+        # Vektor alani
+        field embedding type tensor<float>(x[3]) { #bu sarkinin ruhunu 3 boyutlu uzayda bir koordinat olarak temsil et  
+            indexing: attribute | index | summary
+            attribute {
+                distance-metric: euclidean #sarkılarin benzerligini oklid mesafesi ile olc
+            }
+        }
+    }
+
+    # --- ranking ayarlari ---
+
+    rank-profile similarity_ranking { # benzerlik stratejisi
+        inputs {
+            query(user_vector) tensor<float>(x[3]) # girdi olarak 3 boyutlu bir vektor al
+        }
+        first-phase {
+            expression: closeness(field, embedding) # gelen kullanıcı vektoru ile veritabanındaki embedding vektoru ile mesafeyi ölc
+        }
+    }
+
+    rank-profile hybrid_ranking { # benzerlik ve popülerlik stratejisi
+        inputs {
+            query(user_vector) tensor<float>(x[3]) # girdi olarak 3 boyutlu kullanici vektorunu al
+        }
+        first-phase {
+            #populerlik skoru 0 ve 100 arasi oldugu icin 100e bolup normalize ettik
+            # %70 sarkı benzerligi + %30 populerlik
+            expression: 0.7 * closeness(field, embedding) + 0.3 * (attribute(popularity) / 100)
+        }
+    }
+}

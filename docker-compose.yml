@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: django_backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - master #seqweedFS açılmadan backend ayağa kalkmasın.
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: react_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  master: #Master server
+    image: chrislusf/seaweedfs
+    container_name: seaweedfs-master
+    ports:
+      - "9333:9333" #http
+      - "19333:19333" #gRPC
+    command: "master -ip=master" #volume sunucuları master adıyla ulaşsın
+    volumes:
+      - ./seaweedfs_data/master:/data #master içinde kalıcılık sağlar.Container içindeki data verisini seaweedfs_data/master a bağlar  
+
+  volume1:
+    image: chrislusf/seaweedfs
+    container_name: seaweedfs-volume1
+    ports:
+      - "8080:8080" #http
+      - "18080:18080" 
+    command: "volume -mserver=master:9333 -port=8080 -publicUrl=localhost:8080" #master server e bağlan, master volume1 e 8080 portundan erişir
+    depends_on:
+      - master
+    volumes:
+      - ./seaweedfs_data/vol1:/data #fiziksel olarak veriler burada tututur
+
+  volume2:
+    image: chrislusf/seaweedfs
+    container_name: seaweedfs-volume2
+    ports:
+      - "8081:8080"
+      - "18081:18080"
+    command: "volume -mserver=master:9333 -port=8080 -publicUrl=localhost:8081" # master a bağlan,master volume 2 ye 8080 portundan erişir.
+    depends_on:
+      - master
+    volumes:
+      - ./seaweedfs_data/vol2:/data #fiziksel olarak verilerin saklanacağı yer
+
+  filer:
+    image: chrislusf/seaweedfs
+    container_name: seaweedfs-filer
+    ports:
+      - "8888:8888" #görsel arayüz
+      - "18888:18888"
+    command: "filer -master=master:9333" # filer master server a bağlanır.
+    depends_on: #master ve volume servisleri ayağa kalkmadan başlatma
+      - master
+      - volume1
+      - volume2
+
+  vespa:
+    image: vespaengine/vespa #Vespa nın docker hub dan en güncel sürümünü indirir
+    container_name: vespa-node
+    hostname: vespa-node  # Vespaya IP adresi dışında bu adla da erişilebilir
+    restart: unless-stopped
+    ports:
+      - "8090:8080" # makinenin portunu vespa nın 8080 portuna bağla
+      - "19071:19071"
+    volumes: #Vespa kalıcı hafızası
+      - vespa_data:/var/lib/vespa
+      - vespa_logs:/var/log/vespa
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+
+# Vespa verilerinin kalıcı olması için volume tanımları
+volumes:
+  vespa_data:
+  vespa_logs:

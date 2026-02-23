@@ -1,0 +1,23 @@
+# Front-end, k8s ve eski dosyalar (Görev dışı)
+frontend/
+k8s/
+readMe.txt
+
+# SeaweedFS fiziksel medya dosyaları (Çok büyük ve gereksiz)
+seaweedfs_data/
+
+# Python ve Django gereksiz cache dosyaları
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# İşletim sistemi kalıntıları
+.DS_Store
+Thumbs.db
+
+
