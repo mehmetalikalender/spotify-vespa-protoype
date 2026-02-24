@@ -23,7 +23,7 @@ Vespa'nın `song.sd` şemasını ve ayarlarını sisteme tanımlamak için aşa�
 
 ```bash
 curl --header "Content-Type:application/zip" \
-     --data-binary @vespa-app/vespa-app.zip \
+     --data-binary @vespa-app.zip \
      http://localhost:19071/application/v2/tenant/default/prepareandactivate
 ```
 
