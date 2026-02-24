@@ -19,18 +19,21 @@ docker-compose up -d
 ### 🔹 Adım 2: Vespa Şemasını Yükleyin (Deploy)
 
 Vespa'nın `song.sd` şemasını ve ayarlarını sisteme tanımlamak için aşağıdaki komutu çalıştırın.
-*(Windows PowerShell kullanıcıları `curl` yerine `curl.exe` yazmalıdır veya Git Bash kullanmalıdır.)*
 
+**Linux / Git Bash kullanıcıları için:**
 ```bash
-curl --header "Content-Type:application/zip" \
-     --data-binary @vespa-app.zip \
-     http://localhost:19071/application/v2/tenant/default/prepareandactivate
+curl --header "Content-Type:application/zip" --data-binary @vespa-app.zip http://localhost:19071/application/v2/tenant/default/prepareandactivate
+```
+
+**Windows PowerShell kullanıcıları için:**
+```powershell
+curl.exe --header "Content-Type:application/zip" --data-binary @vespa-app.zip http://localhost:19071/application/v2/tenant/default/prepareandactivate
 ```
 
 Ekranda aşağıdaki mesajı görüyorsanız Vespa başarıyla yapılandırılmıştır:
 `"message": "Session X for tenant 'default' prepared and activated."`
 
-### 🔹 Adım 3: Verileri Vespa'ya Senkronize Edin (Hydration)
+### 🔹 Adım 3: Verileri Vespa'ya Senkronize Edin
 
 Proje içerisinde hazır bir `db.sqlite3` veritabanı bulunmaktadır. Bu veritabanındaki örnek şarkıların vektörleştirilip (mock embedding) Vespa nın belleğine  yüklenmesi için Django konteynerinin içine aşağıdaki komutu gönderin:
 
